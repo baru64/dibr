@@ -19,6 +19,23 @@ using namespace glm;
 #include "shader.hpp"
 #include "controls.hpp"
 
+struct Sprite{
+	glm::vec3 pos;
+	unsigned char r,g,b,a; // Color
+	float size;
+	float cameradistance; 
+
+	bool operator<(const Sprite& that) const {
+		// Sort in reverse order : far sprites drawn first.
+		return this->cameradistance > that.cameradistance;
+	}
+};
+const int SpriteCount = 2;
+Sprite SpritesContainer[SpriteCount];
+void SortSprites(){
+	std::sort(&SpritesContainer[0], &SpritesContainer[SpriteCount]);
+}
+
 int main( void )
 {
 	// Initialise GLFW
@@ -78,16 +95,22 @@ int main( void )
 	
 	
 	// Create and compile our GLSL program from the shaders
-	GLuint programID = LoadShaders( "billboard.vertexshader", "billboard.fragmentshader" );
+	GLuint programID = LoadShaders( "sprites.vertexshader", "sprites.fragmentshader" );
 
 	// Vertex shader
 	GLuint CameraRight_worldspace_ID  = glGetUniformLocation(programID, "CameraRight_worldspace");
 	GLuint CameraUp_worldspace_ID  = glGetUniformLocation(programID, "CameraUp_worldspace");
 	GLuint ViewProjMatrixID = glGetUniformLocation(programID, "VP");
-	GLuint BillboardPosID = glGetUniformLocation(programID, "BillboardPos");
-	GLuint BillboardSizeID = glGetUniformLocation(programID, "BillboardSize");
+	// GLuint BillboardPosID = glGetUniformLocation(programID, "BillboardPos");
+	// GLuint BillboardSizeID = glGetUniformLocation(programID, "BillboardSize");
 
-	// The VBO containing the 4 vertices of the particles.
+	// TODO NA RAZIE NA SZTYWNO 2 PARTICLE
+	static GLfloat* g_sprite_position_size_data = new GLfloat[SpriteCount * 4];
+	static GLubyte* g_sprite_color_data         = new GLubyte[SpriteCount * 4];
+
+	// TODO POMIJAM PRZYPISYWANIE CAMERADISTANCE BO I TAK STATYCZNIE ZROBIM
+
+	// The VBO containing the 4 vertices of the sprites.
 	static const GLfloat g_vertex_buffer_data[] = { 
 		 -0.5f, -0.5f, 0.0f,
 		  0.5f, -0.5f, 0.0f,
@@ -99,6 +122,34 @@ int main( void )
 	glBindBuffer(GL_ARRAY_BUFFER, billboard_vertex_buffer);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_DYNAMIC_DRAW);
 
+	// The VBO containing the positions and sizes of the sprites
+	GLuint sprites_position_buffer;
+	glGenBuffers(1, &sprites_position_buffer);
+	glBindBuffer(GL_ARRAY_BUFFER, sprites_position_buffer);
+	// Initialize with empty (NULL) buffer : it will be updated later, each frame.
+	glBufferData(GL_ARRAY_BUFFER, SpriteCount * 4 * sizeof(GLfloat), NULL, GL_STREAM_DRAW);
+
+	// The VBO containing the colors of the sprites
+	GLuint sprites_color_buffer;
+	glGenBuffers(1, &sprites_color_buffer);
+	glBindBuffer(GL_ARRAY_BUFFER, sprites_color_buffer);
+	// Initialize with empty (NULL) buffer : it will be updated later, each frame.
+	glBufferData(GL_ARRAY_BUFFER, SpriteCount * 4 * sizeof(GLubyte), NULL, GL_STREAM_DRAW);
+
+	SpritesContainer[0].pos = glm::vec3(0,0,0);
+	SpritesContainer[0].r = 255;
+	SpritesContainer[0].g = 0;
+	SpritesContainer[0].b = 0;
+	SpritesContainer[0].a = 255;
+	SpritesContainer[0].size = 1.0f;
+
+	SpritesContainer[1].pos = glm::vec3(1.0f,0,0);
+	SpritesContainer[1].r = 255;
+	SpritesContainer[1].g = 0;
+	SpritesContainer[1].b = 0;
+	SpritesContainer[1].a = 255;
+	SpritesContainer[1].size = 1.0f;
+
 	double lastTime = glfwGetTime();
 	do
 	{
@@ -109,19 +160,46 @@ int main( void )
 		double delta = currentTime - lastTime;
 		lastTime = currentTime;
 
-
 		computeMatricesFromInputs();
 		glm::mat4 ProjectionMatrix = getProjectionMatrix();
 		glm::mat4 ViewMatrix = getViewMatrix();
 
-		// We will need the camera's position in order to sort the particles
-		// w.r.t the camera's distance.
-		// There should be a getCameraPosition() function in common/controls.cpp, 
-		// but this works too.
 		glm::vec3 CameraPosition(glm::inverse(ViewMatrix)[3]);
 
 		glm::mat4 ViewProjectionMatrix = ProjectionMatrix * ViewMatrix;
 
+		// particle stuff
+		SpritesContainer[0].cameradistance =
+			glm::length2( SpritesContainer[0].pos - CameraPosition );
+		SpritesContainer[1].cameradistance =
+			glm::length2( SpritesContainer[1].pos - CameraPosition );
+		g_sprite_position_size_data[0] = SpritesContainer[0].pos.x;
+		g_sprite_position_size_data[1] = SpritesContainer[0].pos.y;
+		g_sprite_position_size_data[2] = SpritesContainer[0].pos.z;
+		g_sprite_position_size_data[3] = SpritesContainer[0].size;
+		g_sprite_position_size_data[4] = SpritesContainer[1].pos.x;
+		g_sprite_position_size_data[5] = SpritesContainer[1].pos.y;
+		g_sprite_position_size_data[6] = SpritesContainer[1].pos.z;
+		g_sprite_position_size_data[7] = SpritesContainer[1].size;
+		
+		g_sprite_color_data[0] = SpritesContainer[0].r;
+		g_sprite_color_data[1] = SpritesContainer[0].g;
+		g_sprite_color_data[2] = SpritesContainer[0].b;
+		g_sprite_color_data[3] = SpritesContainer[0].a;
+		g_sprite_color_data[4] = SpritesContainer[1].r;
+		g_sprite_color_data[5] = SpritesContainer[1].g;
+		g_sprite_color_data[6] = SpritesContainer[1].b;
+		g_sprite_color_data[7] = SpritesContainer[1].a;
+
+		SortSprites();
+
+		glBindBuffer(GL_ARRAY_BUFFER, sprites_position_buffer);
+		glBufferData(GL_ARRAY_BUFFER, SpriteCount * 4 * sizeof(GLfloat), NULL, GL_STREAM_DRAW); // Buffer orphaning, a common way to improve streaming perf. See above link for details.
+		glBufferSubData(GL_ARRAY_BUFFER, 0, SpriteCount * sizeof(GLfloat) * 4, g_sprite_position_size_data);
+
+		glBindBuffer(GL_ARRAY_BUFFER, sprites_color_buffer);
+		glBufferData(GL_ARRAY_BUFFER, SpriteCount * 4 * sizeof(GLubyte), NULL, GL_STREAM_DRAW); // Buffer orphaning, a common way to improve streaming perf. See above link for details.
+		glBufferSubData(GL_ARRAY_BUFFER, 0, SpriteCount * sizeof(GLubyte) * 4, g_sprite_color_data);
 
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -129,16 +207,9 @@ int main( void )
 		// Use our shader
 		glUseProgram(programID);
 
-		// This is the only interesting part of the tutorial.
-		// This is equivalent to mlutiplying (1,0,0) and (0,1,0) by inverse(ViewMatrix).
-		// ViewMatrix is orthogonal (it was made this way), 
-		// so its inverse is also its transpose, 
-		// and transposing a matrix is "free" (inversing is slooow)
 		glUniform3f(CameraRight_worldspace_ID, ViewMatrix[0][0], ViewMatrix[1][0], ViewMatrix[2][0]);
 		glUniform3f(CameraUp_worldspace_ID   , ViewMatrix[0][1], ViewMatrix[1][1], ViewMatrix[2][1]);
 		
-		glUniform3f(BillboardPosID, 0.0f, 0.5f, 0.0f); // The billboard will be just above the cube
-		glUniform2f(BillboardSizeID, 0.1f, 0.1f);     // and 1m*12cm, because it matches its 256*32 resolution =)
 
 		glUniformMatrix4fv(ViewProjMatrixID, 1, GL_FALSE, &ViewProjectionMatrix[0][0]);
 
@@ -153,14 +224,39 @@ int main( void )
 			0,                  // stride
 			(void*)0            // array buffer offset
 		);
+
+		// 2nd attribute buffer : positions of sprites' centers
+		glEnableVertexAttribArray(1);
+		glBindBuffer(GL_ARRAY_BUFFER, sprites_position_buffer);
+		glVertexAttribPointer(
+			1,                                // attribute. No particular reason for 1, but must match the layout in the shader.
+			4,                                // size : x + y + z + size => 4
+			GL_FLOAT,                         // type
+			GL_FALSE,                         // normalized?
+			0,                                // stride
+			(void*)0                          // array buffer offset
+		);
 		
+		// 3rd attribute buffer : sprites' colors
+		glEnableVertexAttribArray(2);
+		glBindBuffer(GL_ARRAY_BUFFER, sprites_color_buffer);
+		glVertexAttribPointer(
+			2,                                // attribute. No particular reason for 1, but must match the layout in the shader.
+			4,                                // size : r + g + b + a => 4
+			GL_UNSIGNED_BYTE,                 // type
+			GL_TRUE,                          // normalized?    *** YES, this means that the unsigned char[4] will be accessible with a vec4 (floats) in the shader ***
+			0,                                // stride
+			(void*)0                          // array buffer offset
+		);
 
-		// Draw the billboard !
-		// This draws a triangle_strip which looks like a quad.
-		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+		glVertexAttribDivisor(0, 0); // sprites vertices : always reuse the same 4 vertices -> 0
+		glVertexAttribDivisor(1, 1); // positions : one per quad (its center)                 -> 1
+		glVertexAttribDivisor(2, 1); // color : one per quad
 
+		glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, 2);
 		glDisableVertexAttribArray(0);
-
+		glDisableVertexAttribArray(1);
+		glDisableVertexAttribArray(2);
 
 		// Swap buffers
 		glfwSwapBuffers(window);
@@ -171,7 +267,11 @@ int main( void )
 		   glfwWindowShouldClose(window) == 0 );
 
 
+	delete[] g_sprite_position_size_data;
+
 	// Cleanup VBO and shader
+	glDeleteBuffers(1, &sprites_color_buffer);
+	glDeleteBuffers(1, &sprites_position_buffer);
 	glDeleteBuffers(1, &billboard_vertex_buffer);
 	glDeleteProgram(programID);
 	glDeleteVertexArrays(1, &VertexArrayID);
