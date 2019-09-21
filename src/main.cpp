@@ -101,14 +101,9 @@ int main( void )
 	GLuint CameraRight_worldspace_ID  = glGetUniformLocation(programID, "CameraRight_worldspace");
 	GLuint CameraUp_worldspace_ID  = glGetUniformLocation(programID, "CameraUp_worldspace");
 	GLuint ViewProjMatrixID = glGetUniformLocation(programID, "VP");
-	// GLuint BillboardPosID = glGetUniformLocation(programID, "BillboardPos");
-	// GLuint BillboardSizeID = glGetUniformLocation(programID, "BillboardSize");
 
-	// TODO NA RAZIE NA SZTYWNO 2 PARTICLE
 	static GLfloat* g_sprite_position_size_data = new GLfloat[SpriteCount * 4];
 	static GLubyte* g_sprite_color_data         = new GLubyte[SpriteCount * 4];
-
-	// TODO POMIJAM PRZYPISYWANIE CAMERADISTANCE BO I TAK STATYCZNIE ZROBIM
 
 	// The VBO containing the 4 vertices of the sprites.
 	static const GLfloat g_vertex_buffer_data[] = { 
