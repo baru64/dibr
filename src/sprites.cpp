@@ -21,7 +21,11 @@ SpriteGenerator :: SpriteGenerator(unsigned char* image_buffer, unsigned char* d
             new_sprite.b = image_buffer[3*x*i + 3*j + 2];
             new_sprite.a = 255;
             // new_sprite.pos = glm::vec3(j+(x/2), i+(y/2), depth_map[i*x+j]);
-            new_sprite.pos = glm::vec3(j*0.1f, i*0.1f, 0);
+            new_sprite.pos = glm::vec3(
+                j*0.1f-(x/2)*0.1f,
+                (y*0.1f - (i*0.1f) + 0.1f) - (y/2)*0.1f,
+                depth_map[i*x+j]*0.1f
+            );
             
             sprites_container.push_back(new_sprite);
         }
