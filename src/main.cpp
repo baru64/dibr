@@ -15,26 +15,12 @@ GLFWwindow* window;
 #include <glm/gtx/norm.hpp>
 using namespace glm;
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 
 #include "shader.hpp"
 #include "controls.hpp"
-
-struct Sprite{
-	glm::vec3 pos;
-	unsigned char r,g,b,a; // Color
-	float size;
-	float cameradistance; 
-
-	bool operator<(const Sprite& that) const {
-		// Sort in reverse order : far sprites drawn first.
-		return this->cameradistance > that.cameradistance;
-	}
-};
-const int SpriteCount = 2;
-Sprite SpritesContainer[SpriteCount];
-void SortSprites(){
-	std::sort(&SpritesContainer[0], &SpritesContainer[SpriteCount]);
-}
+#include "sprites.hpp"
 
 int main( void )
 {
@@ -102,8 +88,32 @@ int main( void )
 	GLuint CameraUp_worldspace_ID  = glGetUniformLocation(programID, "CameraUp_worldspace");
 	GLuint ViewProjMatrixID = glGetUniformLocation(programID, "VP");
 
-	static GLfloat* g_sprite_position_size_data = new GLfloat[SpriteCount * 4];
-	static GLubyte* g_sprite_color_data         = new GLubyte[SpriteCount * 4];
+	// Load images and create sprite generator
+	int rgb_width, rgb_height, d_width, d_height, bpp;
+	unsigned char* rgb_image = stbi_load("sample_img.jpg", &rgb_width, &rgb_height, &bpp, 3);
+	unsigned char* depth_image = stbi_load("sample_depth.jpg", &d_width, &d_height, &bpp, 1);
+
+	if (rgb_width != d_width || rgb_height != d_height) {
+		printf("ERROR: Image and depth map have different size!\n");
+		return 1;
+	}
+	// unsigned char rgb_image[] = {
+	// 	255, 0, 0,
+	// 	0, 255, 0,
+	// 	0, 0, 255,
+	// 	255, 255, 255,
+	// };
+	// unsigned char depth_image[] = {
+	// 	0, 0, 0, 0,
+	// };
+	// rgb_width = 2;
+	// rgb_height = 2;
+
+	SpriteGenerator sprites(rgb_image, depth_image, rgb_width, rgb_height);
+	printf("Number of sprites: %d\n", sprites.sprite_count);
+
+	static GLfloat* g_sprite_position_size_data = new GLfloat[sprites.sprite_count * 4];
+	static GLubyte* g_sprite_color_data         = new GLubyte[sprites.sprite_count * 4];
 
 	// The VBO containing the 4 vertices of the sprites.
 	static const GLfloat g_vertex_buffer_data[] = { 
@@ -122,28 +132,14 @@ int main( void )
 	glGenBuffers(1, &sprites_position_buffer);
 	glBindBuffer(GL_ARRAY_BUFFER, sprites_position_buffer);
 	// Initialize with empty (NULL) buffer : it will be updated later, each frame.
-	glBufferData(GL_ARRAY_BUFFER, SpriteCount * 4 * sizeof(GLfloat), NULL, GL_STREAM_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sprites.sprite_count * 4 * sizeof(GLfloat), NULL, GL_STREAM_DRAW);
 
 	// The VBO containing the colors of the sprites
 	GLuint sprites_color_buffer;
 	glGenBuffers(1, &sprites_color_buffer);
 	glBindBuffer(GL_ARRAY_BUFFER, sprites_color_buffer);
 	// Initialize with empty (NULL) buffer : it will be updated later, each frame.
-	glBufferData(GL_ARRAY_BUFFER, SpriteCount * 4 * sizeof(GLubyte), NULL, GL_STREAM_DRAW);
-
-	SpritesContainer[0].pos = glm::vec3(0,0,0);
-	SpritesContainer[0].r = 255;
-	SpritesContainer[0].g = 0;
-	SpritesContainer[0].b = 0;
-	SpritesContainer[0].a = 255;
-	SpritesContainer[0].size = 1.0f;
-
-	SpritesContainer[1].pos = glm::vec3(1.0f,0,0);
-	SpritesContainer[1].r = 255;
-	SpritesContainer[1].g = 0;
-	SpritesContainer[1].b = 0;
-	SpritesContainer[1].a = 255;
-	SpritesContainer[1].size = 1.0f;
+	glBufferData(GL_ARRAY_BUFFER, sprites.sprite_count * 4 * sizeof(GLubyte), NULL, GL_STREAM_DRAW);
 
 	double lastTime = glfwGetTime();
 	do
@@ -163,38 +159,25 @@ int main( void )
 
 		glm::mat4 ViewProjectionMatrix = ProjectionMatrix * ViewMatrix;
 
-		// particle stuff
-		SpritesContainer[0].cameradistance =
-			glm::length2( SpritesContainer[0].pos - CameraPosition );
-		SpritesContainer[1].cameradistance =
-			glm::length2( SpritesContainer[1].pos - CameraPosition );
-		g_sprite_position_size_data[0] = SpritesContainer[0].pos.x;
-		g_sprite_position_size_data[1] = SpritesContainer[0].pos.y;
-		g_sprite_position_size_data[2] = SpritesContainer[0].pos.z;
-		g_sprite_position_size_data[3] = SpritesContainer[0].size;
-		g_sprite_position_size_data[4] = SpritesContainer[1].pos.x;
-		g_sprite_position_size_data[5] = SpritesContainer[1].pos.y;
-		g_sprite_position_size_data[6] = SpritesContainer[1].pos.z;
-		g_sprite_position_size_data[7] = SpritesContainer[1].size;
-		
-		g_sprite_color_data[0] = SpritesContainer[0].r;
-		g_sprite_color_data[1] = SpritesContainer[0].g;
-		g_sprite_color_data[2] = SpritesContainer[0].b;
-		g_sprite_color_data[3] = SpritesContainer[0].a;
-		g_sprite_color_data[4] = SpritesContainer[1].r;
-		g_sprite_color_data[5] = SpritesContainer[1].g;
-		g_sprite_color_data[6] = SpritesContainer[1].b;
-		g_sprite_color_data[7] = SpritesContainer[1].a;
+		// sprite stuff
+		sprites.updateCameraDistance(CameraPosition);
+		sprites.fillPositionSizeBuffer(g_sprite_position_size_data);
+		sprites.fillColorBuffer(g_sprite_color_data);
+		sprites.sortSprites();
 
-		SortSprites();
+		// printf("Number of sprites: %d\n", sprites.sprite_count);
+		// for (int i = 0; i < 4*sprites.sprite_count; i++) {
+		// 	printf("%f ", g_sprite_position_size_data[i]);
+		// 	if (i % 3 == 0) printf("\n");
+		// }
 
 		glBindBuffer(GL_ARRAY_BUFFER, sprites_position_buffer);
-		glBufferData(GL_ARRAY_BUFFER, SpriteCount * 4 * sizeof(GLfloat), NULL, GL_STREAM_DRAW); // Buffer orphaning, a common way to improve streaming perf. See above link for details.
-		glBufferSubData(GL_ARRAY_BUFFER, 0, SpriteCount * sizeof(GLfloat) * 4, g_sprite_position_size_data);
+		glBufferData(GL_ARRAY_BUFFER, sprites.sprite_count * 4 * sizeof(GLfloat), NULL, GL_STREAM_DRAW); // Buffer orphaning, a common way to improve streaming perf. See above link for details.
+		glBufferSubData(GL_ARRAY_BUFFER, 0, sprites.sprite_count * sizeof(GLfloat) * 4, g_sprite_position_size_data);
 
 		glBindBuffer(GL_ARRAY_BUFFER, sprites_color_buffer);
-		glBufferData(GL_ARRAY_BUFFER, SpriteCount * 4 * sizeof(GLubyte), NULL, GL_STREAM_DRAW); // Buffer orphaning, a common way to improve streaming perf. See above link for details.
-		glBufferSubData(GL_ARRAY_BUFFER, 0, SpriteCount * sizeof(GLubyte) * 4, g_sprite_color_data);
+		glBufferData(GL_ARRAY_BUFFER, sprites.sprite_count * 4 * sizeof(GLubyte), NULL, GL_STREAM_DRAW); // Buffer orphaning, a common way to improve streaming perf. See above link for details.
+		glBufferSubData(GL_ARRAY_BUFFER, 0, sprites.sprite_count * sizeof(GLubyte) * 4, g_sprite_color_data);
 
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -248,7 +231,7 @@ int main( void )
 		glVertexAttribDivisor(1, 1); // positions : one per quad (its center)                 -> 1
 		glVertexAttribDivisor(2, 1); // color : one per quad
 
-		glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, 2);
+		glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, sprites.sprite_count);
 		glDisableVertexAttribArray(0);
 		glDisableVertexAttribArray(1);
 		glDisableVertexAttribArray(2);
