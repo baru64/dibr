@@ -1,5 +1,5 @@
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
 
 #include <vector>
 #include <algorithm>
@@ -22,7 +22,7 @@ using namespace glm;
 #include "controls.hpp"
 #include "sprites.hpp"
 
-int main( void )
+int main( int argc, char** argv )
 {
 	// Initialise GLFW
 	if( !glfwInit() )
@@ -97,21 +97,24 @@ int main( void )
 		printf("ERROR: Image and depth map have different size!\n");
 		return 1;
 	}
-	// unsigned char rgb_image[] = {
-	// 	255, 0, 0,
-	// 	0, 255, 0,
-	// 	0, 0, 255,
-	// 	255, 255, 255,
-	// };
-	// unsigned char depth_image[] = {
-	// 	0, 0, 0, 0,
-	// };
-	// rgb_width = 2;
-	// rgb_height = 2;
 
-	SpriteGenerator sprites(rgb_image, depth_image, rgb_width, rgb_height);
+	float depth_scale = 0.1f;
+	float background_filter = 0.0f;
+
+	// Parse arguments and create SpriteGenerator
+	if (argc == 2) {
+		depth_scale = atof(argv[1]);
+	} else if (argc == 3) {
+		depth_scale = atof(argv[1]);
+		background_filter = atof(argv[2]);
+	}
+
+	SpriteGenerator sprites(rgb_image, depth_image,
+							rgb_width, rgb_height,
+							depth_scale, background_filter);
 	printf("Number of sprites: %d\n", sprites.sprite_count);
 
+	// Buffers for rendering
 	static GLfloat* g_sprite_position_size_data = new GLfloat[sprites.sprite_count * 4];
 	static GLubyte* g_sprite_color_data         = new GLubyte[sprites.sprite_count * 4];
 

@@ -10,10 +10,18 @@
 
 #include "sprites.hpp"
 
-SpriteGenerator :: SpriteGenerator(unsigned char* image_buffer, unsigned char* depth_map, int x, int y){
+SpriteGenerator :: SpriteGenerator( unsigned char* image_buffer,
+                                    unsigned char* depth_map,
+                                    int x, int y,
+                                    float depth_scale,
+                                    float background_filter ) {
     //generate sprites
     for (int i=0; i < y; ++i) {
         for (int j=0; j < x; ++j) {
+            if ((depth_map[i*x+j] * depth_scale) < background_filter) {
+                // skip background
+                continue;
+            }
             Sprite new_sprite;
             new_sprite.size = 0.1f;
             new_sprite.r = image_buffer[3*x*i + 3*j + 0];
@@ -24,7 +32,7 @@ SpriteGenerator :: SpriteGenerator(unsigned char* image_buffer, unsigned char* d
             new_sprite.pos = glm::vec3(
                 j*0.1f-(x/2)*0.1f,
                 (y*0.1f - (i*0.1f) + 0.1f) - (y/2)*0.1f,
-                depth_map[i*x+j]*0.1f
+                depth_map[i*x+j] * depth_scale
             );
             
             sprites_container.push_back(new_sprite);

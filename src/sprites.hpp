@@ -17,7 +17,13 @@ class SpriteGenerator {
     public:
         int sprite_count;
 
-        SpriteGenerator(unsigned char* image_buffer, unsigned char* depth_map, int x, int y);
+        SpriteGenerator(
+            unsigned char* image_buffer,
+            unsigned char* depth_map,
+            int x, int y,
+            float depth_scale,
+            float background_filter
+        );
         void fillPositionSizeBuffer(GLfloat* position_size_buffer);
         void fillColorBuffer(GLubyte* color_buffer);
         void sortSprites();
