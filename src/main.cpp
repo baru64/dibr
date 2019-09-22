@@ -87,28 +87,30 @@ int main( int argc, char** argv )
 	GLuint CameraRight_worldspace_ID  = glGetUniformLocation(programID, "CameraRight_worldspace");
 	GLuint CameraUp_worldspace_ID  = glGetUniformLocation(programID, "CameraUp_worldspace");
 	GLuint ViewProjMatrixID = glGetUniformLocation(programID, "VP");
+	
+	// Parse arguments
+	float depth_scale = 0.1f;
+	float background_filter = 0.0f;
+	char src_image[128] = "sample_img.jpg";
+	char src_depth[128] = "sample_depth.jpg";
+	if (argc >= 2) depth_scale = atof(argv[1]);
+	if (argc >= 3) background_filter = atof(argv[2]);
+	if (argc == 5) {
+		strcpy(src_image, argv[3]);
+		strcpy(src_depth, argv[4]);
+	}
 
 	// Load images and create sprite generator
 	int rgb_width, rgb_height, d_width, d_height, bpp;
-	unsigned char* rgb_image = stbi_load("sample_img.jpg", &rgb_width, &rgb_height, &bpp, 3);
-	unsigned char* depth_image = stbi_load("sample_depth.jpg", &d_width, &d_height, &bpp, 1);
+	unsigned char* rgb_image = stbi_load(src_image, &rgb_width, &rgb_height, &bpp, 3);
+	unsigned char* depth_image = stbi_load(src_depth, &d_width, &d_height, &bpp, 1);
 
 	if (rgb_width != d_width || rgb_height != d_height) {
 		printf("ERROR: Image and depth map have different size!\n");
 		return 1;
 	}
 
-	float depth_scale = 0.1f;
-	float background_filter = 0.0f;
-
-	// Parse arguments and create SpriteGenerator
-	if (argc == 2) {
-		depth_scale = atof(argv[1]);
-	} else if (argc == 3) {
-		depth_scale = atof(argv[1]);
-		background_filter = atof(argv[2]);
-	}
-
+	// create SpriteGenerator
 	SpriteGenerator sprites(rgb_image, depth_image,
 							rgb_width, rgb_height,
 							depth_scale, background_filter);
