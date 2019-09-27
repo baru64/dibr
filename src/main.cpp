@@ -7,7 +7,6 @@
 #include <GL/glew.h>
 
 #include <GLFW/glfw3.h>
-GLFWwindow* window;
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/glm.hpp>
@@ -39,8 +38,32 @@ int main( int argc, char** argv )
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // To make MacOS happy; should not be needed
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
+	// Parse arguments
+	float depth_scale = 0.1f;
+	float background_filter = 0.0f;
+	char src_image[128] = "sample_img.jpg";
+	char src_depth[128] = "sample_depth.jpg";
+	if (argc >= 2) depth_scale = atof(argv[1]);
+	if (argc >= 3) background_filter = atof(argv[2]);
+	if (argc == 5) {
+		strcpy(src_image, argv[3]);
+		strcpy(src_depth, argv[4]);
+	}
+
+	// Load images and create sprite generator
+	int rgb_width, rgb_height, d_width, d_height, bpp;
+	unsigned char* rgb_image = stbi_load(src_image, &rgb_width, &rgb_height, &bpp, 3);
+	unsigned char* depth_image = stbi_load(src_depth, &d_width, &d_height, &bpp, 1);
+
+	if (rgb_width != d_width || rgb_height != d_height) {
+		printf("ERROR: Image and depth map have different size!\n");
+		return 1;
+	}
+
+
 	// Open a window and create its OpenGL context
-	window = glfwCreateWindow( 1024, 768, "DIBR", NULL, NULL);
+	GLFWwindow* window;
+	window = glfwCreateWindow( rgb_width, rgb_height, "DIBR", NULL, NULL);
 	if( window == NULL ){
 		fprintf( stderr, "Failed to open GLFW window. If you have an Intel GPU, they are not 3.3 compatible. Try the 2.1 version of the tutorials.\n" );
 		getchar();
@@ -48,6 +71,17 @@ int main( int argc, char** argv )
 		return -1;
 	}
 	glfwMakeContextCurrent(window);
+
+	// create SpriteGenerator
+	computeMatricesFromInputs(window, rgb_width, rgb_height);
+	SpriteGenerator sprites(rgb_image, depth_image,
+							rgb_width, rgb_height,
+							depth_scale, background_filter,
+							true,
+							getProjectionMatrix(),
+							getViewMatrix()
+							);
+	printf("Number of sprites: %d\n", sprites.sprite_count);
 
 	// Initialize GLEW
 	glewExperimental = true; // Needed for core profile
@@ -88,33 +122,6 @@ int main( int argc, char** argv )
 	GLuint CameraUp_worldspace_ID  = glGetUniformLocation(programID, "CameraUp_worldspace");
 	GLuint ViewProjMatrixID = glGetUniformLocation(programID, "VP");
 	
-	// Parse arguments
-	float depth_scale = 0.1f;
-	float background_filter = 0.0f;
-	char src_image[128] = "sample_img.jpg";
-	char src_depth[128] = "sample_depth.jpg";
-	if (argc >= 2) depth_scale = atof(argv[1]);
-	if (argc >= 3) background_filter = atof(argv[2]);
-	if (argc == 5) {
-		strcpy(src_image, argv[3]);
-		strcpy(src_depth, argv[4]);
-	}
-
-	// Load images and create sprite generator
-	int rgb_width, rgb_height, d_width, d_height, bpp;
-	unsigned char* rgb_image = stbi_load(src_image, &rgb_width, &rgb_height, &bpp, 3);
-	unsigned char* depth_image = stbi_load(src_depth, &d_width, &d_height, &bpp, 1);
-
-	if (rgb_width != d_width || rgb_height != d_height) {
-		printf("ERROR: Image and depth map have different size!\n");
-		return 1;
-	}
-
-	// create SpriteGenerator
-	SpriteGenerator sprites(rgb_image, depth_image,
-							rgb_width, rgb_height,
-							depth_scale, background_filter);
-	printf("Number of sprites: %d\n", sprites.sprite_count);
 
 	// Buffers for rendering
 	static GLfloat* g_sprite_position_size_data = new GLfloat[sprites.sprite_count * 4];
@@ -156,7 +163,7 @@ int main( int argc, char** argv )
 		double delta = currentTime - lastTime;
 		lastTime = currentTime;
 
-		computeMatricesFromInputs();
+		computeMatricesFromInputs(window, rgb_width, rgb_height);
 		glm::mat4 ProjectionMatrix = getProjectionMatrix();
 		glm::mat4 ViewMatrix = getViewMatrix();
 

@@ -12,29 +12,52 @@
 
 SpriteGenerator :: SpriteGenerator( unsigned char* image_buffer,
                                     unsigned char* depth_map,
-                                    int x, int y,
+                                    int pic_w, int pic_h,
                                     float depth_scale,
-                                    float background_filter ) {
+                                    float background_filter,
+                                    bool unproject,
+                                    glm::mat4 projection_matrix,
+                                    glm::mat4 view_matrix ) {
     //generate sprites
-    for (int i=0; i < y; ++i) {
-        for (int j=0; j < x; ++j) {
-            if ((depth_map[i*x+j] * depth_scale) < background_filter) {
+    for (int i=0; i < pic_h; ++i) {
+        for (int j=0; j < pic_w; ++j) {
+            if ((depth_map[i*pic_w+j] * depth_scale) < background_filter) {
                 // skip background
                 continue;
             }
             Sprite new_sprite;
             new_sprite.size = 0.1f;
-            new_sprite.r = image_buffer[3*x*i + 3*j + 0];
-            new_sprite.g = image_buffer[3*x*i + 3*j + 1];
-            new_sprite.b = image_buffer[3*x*i + 3*j + 2];
+            new_sprite.r = image_buffer[3*pic_w*i + 3*j + 0];
+            new_sprite.g = image_buffer[3*pic_w*i + 3*j + 1];
+            new_sprite.b = image_buffer[3*pic_w*i + 3*j + 2];
             new_sprite.a = 255;
-            // new_sprite.pos = glm::vec3(j+(x/2), i+(y/2), depth_map[i*x+j]);
-            new_sprite.pos = glm::vec3(
-                j*0.1f-(x/2)*0.1f,
-                (y*0.1f - (i*0.1f) + 0.1f) - (y/2)*0.1f,
-                depth_map[i*x+j] * depth_scale
-            );
-            
+
+            if (unproject) {
+                glm::vec4 viewport = glm::vec4(0, 0, pic_w, pic_h);
+                glm::vec3 wincoord = glm::vec3(
+                    j*0.1f-(pic_w/2)*0.1f,
+                    (pic_h*0.1f - (i*0.1f) + 0.1f) - (pic_h/2)*0.1f,
+                    depth_map[i*pic_w+j] * depth_scale
+                );
+                glm::vec3 objcoord = glm::unProject(
+                    wincoord,
+                    view_matrix,
+                    projection_matrix,
+                    viewport
+                );
+
+                new_sprite.pos = glm::vec3(objcoord.x,
+                                           objcoord.y,
+                                           objcoord.z);
+                printf("%f %f %f \n", objcoord.x, objcoord.y, objcoord.z);
+            } else {
+                new_sprite.pos = glm::vec3(
+                    j*0.1f-(pic_w/2)*0.1f,
+                    (pic_h*0.1f - (i*0.1f) + 0.1f) - (pic_h/2)*0.1f,
+                    depth_map[i*pic_w+j] * depth_scale
+                );
+            }
+
             sprites_container.push_back(new_sprite);
         }
     }

@@ -20,10 +20,12 @@ class SpriteGenerator {
         SpriteGenerator(
             unsigned char* image_buffer,
             unsigned char* depth_map,
-            int x, int y,
+            int pic_w, int pic_h,
             float depth_scale,
-            float background_filter
-        );
+            float background_filter,
+            bool unproject,
+            glm::mat4 projection_matrix,
+            glm::mat4 view_matrix );
         void fillPositionSizeBuffer(GLfloat* position_size_buffer);
         void fillColorBuffer(GLubyte* color_buffer);
         void sortSprites();
