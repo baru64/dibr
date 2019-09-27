@@ -35,9 +35,9 @@ SpriteGenerator :: SpriteGenerator( unsigned char* image_buffer,
             if (unproject) {
                 glm::vec4 viewport = glm::vec4(0, 0, pic_w, pic_h);
                 glm::vec3 wincoord = glm::vec3(
-                    j*0.1f-(pic_w/2)*0.1f,
-                    (pic_h*0.1f - (i*0.1f) + 0.1f) - (pic_h/2)*0.1f,
-                    depth_map[i*pic_w+j] * depth_scale
+                    j,
+                    pic_h - i - 1,
+                    depth_map[i*pic_w+j]
                 );
                 glm::vec3 objcoord = glm::unProject(
                     wincoord,
