@@ -22,6 +22,12 @@ using namespace glm;
 #include "controls.hpp"
 #include "sprites.hpp"
 
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
+{
+    if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
+        printf("RMB pressed.\n");
+}
+
 int main( int argc, char** argv )
 {
 	// Initialise GLFW
@@ -145,6 +151,9 @@ int main( int argc, char** argv )
 	glBindBuffer(GL_ARRAY_BUFFER, sprites_color_buffer);
 	// Initialize with empty (NULL) buffer : it will be updated later, each frame.
 	glBufferData(GL_ARRAY_BUFFER, sprites.sprite_count * 4 * sizeof(GLubyte), NULL, GL_STREAM_DRAW);
+
+	// set mouse calback
+	glfwSetMouseButtonCallback(window, mouse_button_callback);
 
 	do
 	{

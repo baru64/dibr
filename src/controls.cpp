@@ -38,21 +38,28 @@ float r = 60;
 
 bool handleKeyboard(GLFWwindow* window) {
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE ) == GLFW_PRESS) return true;
-	// TODO rest of the keys
 	if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-		alpha += 3.14f * 0.05f;
+		beta += 3.14f * 0.05f;
 		return false;
 	}
 	if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-		beta -= 3.14f * 0.05f;
-		return false;
-	}
-	if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
 		alpha -= 3.14f * 0.05f;
 		return false;
 	}
+	if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+		beta -= 3.14f * 0.05f;
+		return false;
+	}
 	if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-		beta += 3.14f * 0.05f;
+		alpha += 3.14f * 0.05f;
+		return false;
+	}
+	if(glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
+		r -= 1.0f;
+		return false;
+	}
+	if(glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {
+		r += 1.0f;
 		return false;
 	}
 	return false;
@@ -80,9 +87,9 @@ void computeMatrices() {
 
 	ProjectionMatrix = glm::perspective(glm::radians(FoV), 4.0f / 3.0f, 0.1f, 100.0f);
 	ViewMatrix       = glm::lookAt(
-								position,           // Camera is here
-								glm::vec3(0,0,0), // and looks here : at the same position, plus "direction"
-								glm::vec3(0,1,0)                  // Head is up (set to 0,-1,0 to look upside-down)
+								position,
+								glm::vec3(0,0,0),
+								glm::vec3(0,1,0)
 						   );
 }
 
