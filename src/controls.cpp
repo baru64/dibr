@@ -32,7 +32,59 @@ float initialFoV = 45.0f;
 float speed = 3.0f; // 3 units / second
 float mouseSpeed = 0.005f;
 
+float alpha = 0; // theta
+float beta = 0; // fi
+float r = 60;
 
+bool handleKeyboard(GLFWwindow* window) {
+	if (glfwGetKey(window, GLFW_KEY_ESCAPE ) == GLFW_PRESS) return true;
+	// TODO rest of the keys
+	if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+		alpha += 3.14f * 0.05f;
+		return false;
+	}
+	if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+		beta -= 3.14f * 0.05f;
+		return false;
+	}
+	if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+		alpha -= 3.14f * 0.05f;
+		return false;
+	}
+	if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+		beta += 3.14f * 0.05f;
+		return false;
+	}
+	return false;
+}
+
+void computeMatrices() {
+	position = glm::vec3(
+		r * sin(alpha) * cos(beta),
+		r * sin(alpha) * sin(beta),
+		r * cos(alpha)
+	);
+
+	glm::vec3 direction(
+		cos(verticalAngle) * sin(horizontalAngle), 
+		sin(verticalAngle),
+		cos(verticalAngle) * cos(horizontalAngle)
+	);
+	glm::vec3 right = glm::vec3(
+		sin(horizontalAngle - 3.14f/2.0f), 
+		0,
+		cos(horizontalAngle - 3.14f/2.0f)
+	);
+	glm::vec3 up = glm::cross( right, direction );
+	float FoV = initialFoV;// - 5 * glfwGetMouseWheel(); // Now GLFW 3 requires setting up a callback for this. It's a bit too complicated for this beginner's tutorial, so it's disabled instead.
+
+	ProjectionMatrix = glm::perspective(glm::radians(FoV), 4.0f / 3.0f, 0.1f, 100.0f);
+	ViewMatrix       = glm::lookAt(
+								position,           // Camera is here
+								glm::vec3(0,0,0), // and looks here : at the same position, plus "direction"
+								glm::vec3(0,1,0)                  // Head is up (set to 0,-1,0 to look upside-down)
+						   );
+}
 
 void computeMatricesFromInputs(){
 

@@ -146,17 +146,13 @@ int main( int argc, char** argv )
 	// Initialize with empty (NULL) buffer : it will be updated later, each frame.
 	glBufferData(GL_ARRAY_BUFFER, sprites.sprite_count * 4 * sizeof(GLubyte), NULL, GL_STREAM_DRAW);
 
-	double lastTime = glfwGetTime();
 	do
 	{
 		// Clear the screen
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		double currentTime = glfwGetTime();
-		double delta = currentTime - lastTime;
-		lastTime = currentTime;
-
-		computeMatricesFromInputs();
+		// computeMatricesFromInputs();
+		computeMatrices();
 		glm::mat4 ProjectionMatrix = getProjectionMatrix();
 		glm::mat4 ViewMatrix = getViewMatrix();
 
@@ -246,7 +242,7 @@ int main( int argc, char** argv )
 		glfwPollEvents();
 
 	} // Check if the ESC key was pressed or the window was closed
-	while( glfwGetKey(window, GLFW_KEY_ESCAPE ) != GLFW_PRESS &&
+	while( !handleKeyboard(window) &&
 		   glfwWindowShouldClose(window) == 0 );
 
 
