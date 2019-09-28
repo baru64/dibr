@@ -36,7 +36,7 @@ float alpha = 0; // theta
 float beta = 0; // fi
 float r = 60;
 
-bool handleKeyboard(GLFWwindow* window) {
+bool handleKeyboard(GLFWwindow* window, SpriteGenerator* sprites) {
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE ) == GLFW_PRESS) return true;
 	if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
 		beta += 3.14f * 0.05f;
@@ -60,6 +60,14 @@ bool handleKeyboard(GLFWwindow* window) {
 	}
 	if(glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {
 		r += 1.0f;
+		return false;
+	}
+	if(glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS) {
+		sprites->removeSelected();
+		return false;
+	}
+	if(glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS) {
+		sprites->cancelSelection();
 		return false;
 	}
 	return false;

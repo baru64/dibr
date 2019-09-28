@@ -34,7 +34,8 @@ SpriteGenerator :: SpriteGenerator( unsigned char* image_buffer,
                 (y*0.1f - (i*0.1f) + 0.1f) - (y/2)*0.1f,
                 depth_map[i*x+j] * depth_scale
             );
-            
+
+            new_sprite.selected = false;
             sprites_container.push_back(new_sprite);
         }
     }
@@ -64,14 +65,61 @@ void SpriteGenerator :: fillColorBuffer(GLubyte* color_buffer) {
     std::vector<Sprite>::iterator it_sprite = sprites_container.begin();
 
     for (int i = 0; i < sprite_count; ++i) {
-        color_buffer[4*i + 0] = (*it_sprite).r;
-        color_buffer[4*i + 1] = (*it_sprite).g;
-        color_buffer[4*i + 2] = (*it_sprite).b;
-        color_buffer[4*i + 3] = (*it_sprite).a;
+        if (it_sprite->selected) {
+            color_buffer[4*i + 0] = 255;
+            color_buffer[4*i + 1] = 0;
+            color_buffer[4*i + 2] = 0;
+            color_buffer[4*i + 3] = 255;
+        } else {
+            color_buffer[4*i + 0] = (*it_sprite).r;
+            color_buffer[4*i + 1] = (*it_sprite).g;
+            color_buffer[4*i + 2] = (*it_sprite).b;
+            color_buffer[4*i + 3] = (*it_sprite).a;
+        }
         ++it_sprite;
     }
 }
 
 void SpriteGenerator :: sortSprites() {
 	std::sort(sprites_container.begin(), sprites_container.end());
+}
+
+void SpriteGenerator :: select(glm::vec3 obj_position) {
+    printf("Selecting \n");
+    std::vector<Sprite>::reverse_iterator it_sprite = sprites_container.rbegin();
+    for (int i = 0; i < sprite_count; ++i) {
+        if (
+            (   obj_position.x - 0.1f < it_sprite->pos.x
+            && obj_position.x + 0.1f > it_sprite->pos.x )
+                &&
+            (   obj_position.y - 0.1f < it_sprite->pos.y
+            && obj_position.y + 0.1f > it_sprite->pos.y )
+                &&
+            (   obj_position.z - 0.1f < it_sprite->pos.z
+            && obj_position.z + 0.1f > it_sprite->pos.z )
+        ) {
+            it_sprite->selected = true;
+        }
+        ++it_sprite;
+    }
+}
+
+void SpriteGenerator :: removeSelected() {
+    for(
+        std::vector<Sprite>::iterator i = sprites_container.begin();
+        i != sprites_container.end();
+        ++i
+    ) {
+        if (i->selected) sprites_container.erase(i);
+    }
+}
+
+void SpriteGenerator :: cancelSelection() {
+    for(
+        std::vector<Sprite>::iterator i = sprites_container.begin();
+        i != sprites_container.end();
+        ++i
+    ) {
+        if (i->selected) i->selected = false;
+    }
 }

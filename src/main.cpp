@@ -24,8 +24,32 @@ using namespace glm;
 
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 {
-    if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
         printf("RMB pressed.\n");
+		double mouse_x, mouse_y;
+		glfwGetCursorPos(window, &mouse_x, &mouse_y);
+
+		GLfloat depth;
+		glReadPixels(mouse_x, 768 - mouse_y - 1, 1, 1,
+					 GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
+		printf("Pos: %f %f Depth: %f \n", mouse_x, mouse_y, depth);
+
+		glm::vec4 viewport = glm::vec4(0, 0, 1024, 768);
+  		glm::vec3 win_pos = glm::vec3(mouse_x, 768 - mouse_y - 1, depth);
+  		glm::vec3 obj_pos = glm::unProject(
+			win_pos,
+			getViewMatrix(),
+			getProjectionMatrix(), 
+			viewport
+		);
+
+ 		printf("Coordinates in object space: %f, %f, %f\n",
+         		obj_pos.x, obj_pos.y, obj_pos.z);
+
+		SpriteGenerator* sprites =
+			reinterpret_cast<SpriteGenerator *>(glfwGetWindowUserPointer(window));
+		sprites->select(obj_pos);
+	}
 }
 
 int main( int argc, char** argv )
@@ -67,7 +91,7 @@ int main( int argc, char** argv )
 	// Ensure we can capture the escape key being pressed below
 	glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
     // Hide the mouse and enable unlimited mouvement
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    // glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     
     // Set the mouse at the center of the screen
     glfwPollEvents();
@@ -122,6 +146,9 @@ int main( int argc, char** argv )
 							depth_scale, background_filter);
 	printf("Number of sprites: %d\n", sprites.sprite_count);
 
+	// Set window pointer to sprites
+	glfwSetWindowUserPointer(window, reinterpret_cast<void *>(&sprites));
+
 	// Buffers for rendering
 	static GLfloat* g_sprite_position_size_data = new GLfloat[sprites.sprite_count * 4];
 	static GLubyte* g_sprite_color_data         = new GLubyte[sprites.sprite_count * 4];
@@ -174,12 +201,6 @@ int main( int argc, char** argv )
 		sprites.fillPositionSizeBuffer(g_sprite_position_size_data);
 		sprites.fillColorBuffer(g_sprite_color_data);
 		sprites.sortSprites();
-
-		// printf("Number of sprites: %d\n", sprites.sprite_count);
-		// for (int i = 0; i < 4*sprites.sprite_count; i++) {
-		// 	printf("%f ", g_sprite_position_size_data[i]);
-		// 	if (i % 3 == 0) printf("\n");
-		// }
 
 		glBindBuffer(GL_ARRAY_BUFFER, sprites_position_buffer);
 		glBufferData(GL_ARRAY_BUFFER, sprites.sprite_count * 4 * sizeof(GLfloat), NULL, GL_STREAM_DRAW); // Buffer orphaning, a common way to improve streaming perf. See above link for details.
@@ -250,8 +271,8 @@ int main( int argc, char** argv )
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 
-	} // Check if the ESC key was pressed or the window was closed
-	while( !handleKeyboard(window) &&
+	}
+	while( !handleKeyboard(window, &sprites) &&
 		   glfwWindowShouldClose(window) == 0 );
 
 
