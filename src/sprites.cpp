@@ -85,7 +85,6 @@ void SpriteGenerator :: sortSprites() {
 }
 
 void SpriteGenerator :: select(glm::vec3 obj_position) {
-    printf("Selecting \n");
     std::vector<Sprite>::reverse_iterator it_sprite = sprites_container.rbegin();
     for (int i = 0; i < sprite_count; ++i) {
         if (

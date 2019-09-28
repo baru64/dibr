@@ -22,34 +22,80 @@ using namespace glm;
 #include "controls.hpp"
 #include "sprites.hpp"
 
+struct DIBRContext {
+	double last_mouse_x;
+	double last_mouse_y;
+	bool is_lmb_pressed;
+	SpriteGenerator* sprites;
+	GLfloat* depth_store;
+	int depth_store_size;
+};
+
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 {
+	DIBRContext* context =
+			reinterpret_cast<DIBRContext *>(glfwGetWindowUserPointer(window));
+
     if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
-        printf("RMB pressed.\n");
+		glfwGetCursorPos(window, &(context->last_mouse_x), &(context->last_mouse_y));
+        printf("LMB pressed. last xy: %f %f \n", context->last_mouse_x,
+				context->last_mouse_y);
+		context->is_lmb_pressed = true;
+	}
+	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE) {
+        printf("LMB released.\n");
 		double mouse_x, mouse_y;
 		glfwGetCursorPos(window, &mouse_x, &mouse_y);
 
 		GLfloat depth;
-		glReadPixels(mouse_x, 768 - mouse_y - 1, 1, 1,
-					 GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
-		printf("Pos: %f %f Depth: %f \n", mouse_x, mouse_y, depth);
+		unsigned width, height;
+		if (mouse_x > context->last_mouse_x) {
+			width = mouse_x - context->last_mouse_x + 1;
+			mouse_x = context->last_mouse_x; // to make correct selection area
+		} else {
+			width = context->last_mouse_x - mouse_x + 1;
+		}
+		if (mouse_y > context->last_mouse_y) {
+			height = mouse_y - context->last_mouse_y + 1;
+			mouse_y = context->last_mouse_y; // to make correct selection area
+		} else {
+			height = context->last_mouse_y - mouse_y + 1;
+		}
+
+		glReadnPixels(context->last_mouse_x, 768 - context->last_mouse_y - 1,
+					  width, height,
+					  GL_DEPTH_COMPONENT, GL_FLOAT,
+					  context->depth_store_size, context->depth_store);
 
 		glm::vec4 viewport = glm::vec4(0, 0, 1024, 768);
-  		glm::vec3 win_pos = glm::vec3(mouse_x, 768 - mouse_y - 1, depth);
-  		glm::vec3 obj_pos = glm::unProject(
-			win_pos,
-			getViewMatrix(),
-			getProjectionMatrix(), 
-			viewport
-		);
+		glm::mat4 view_matrix = getViewMatrix();
+		glm::mat4 projection_matrix = getProjectionMatrix();
+		for (int i = 0; i < height; ++i) {
+			for (int j = 0; j < width; ++j) {
+  				glm::vec3 win_pos = glm::vec3(
+					mouse_x+j,
+					768 - mouse_y+i - 1,
+				  	context->depth_store[i*width + j]
+				);
 
- 		printf("Coordinates in object space: %f, %f, %f\n",
-         		obj_pos.x, obj_pos.y, obj_pos.z);
+			
+  				glm::vec3 obj_pos = glm::unProject(
+					win_pos,
+					view_matrix,
+					projection_matrix, 
+					viewport
+				);
 
-		SpriteGenerator* sprites =
-			reinterpret_cast<SpriteGenerator *>(glfwGetWindowUserPointer(window));
-		sprites->select(obj_pos);
+ 				// printf("Coordinates in object space: %f, %f, %f\n",
+  		       	// 	obj_pos.x, obj_pos.y, obj_pos.z);
+
+				context->sprites->select(obj_pos);
+			}
+		}
+
+		context->is_lmb_pressed = false;
 	}
+
 }
 
 int main( int argc, char** argv )
@@ -146,8 +192,17 @@ int main( int argc, char** argv )
 							depth_scale, background_filter);
 	printf("Number of sprites: %d\n", sprites.sprite_count);
 
+	// Set DIBR context
+	DIBRContext context;
+	context.last_mouse_x = 0.0f;
+	context.last_mouse_y = 0.0f;
+	context.is_lmb_pressed = false;
+	context.sprites = &sprites;
+	context.depth_store = new GLfloat[rgb_width*rgb_height];
+	context.depth_store_size = rgb_width*rgb_height;
+
 	// Set window pointer to sprites
-	glfwSetWindowUserPointer(window, reinterpret_cast<void *>(&sprites));
+	glfwSetWindowUserPointer(window, reinterpret_cast<void *>(&context));
 
 	// Buffers for rendering
 	static GLfloat* g_sprite_position_size_data = new GLfloat[sprites.sprite_count * 4];
