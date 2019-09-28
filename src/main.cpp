@@ -75,7 +75,7 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 			for (int j = 0; j < width; ++j) {
   				glm::vec3 win_pos = glm::vec3(
 					mouse_x+j,
-					768 - mouse_y+i - 1,
+					768 - (mouse_y+i) - 1,
 				  	context->depth_store[i*width + j]
 				);
 
@@ -332,16 +332,8 @@ int main( int argc, char** argv )
 			double mouse_x, mouse_y;
 			glfwGetCursorPos(window, &mouse_x, &mouse_y);
 			int width, height;
-			if (mouse_x > context.last_mouse_x) {
-				width = mouse_x - context.last_mouse_x + 1;
-			} else {
-				width = context.last_mouse_x - mouse_x + 1;
-			}
-			if (mouse_y > context.last_mouse_y) {
-				height = mouse_y - context.last_mouse_y + 1;
-			} else {
-				height = context.last_mouse_y - mouse_y + 1;
-			}
+			width = mouse_x - context.last_mouse_x + 1;
+			height = mouse_y - context.last_mouse_y + 1;
 			drawRectangle2D((int)context.last_mouse_x, (int)context.last_mouse_y,
 							width, height);
 		}
