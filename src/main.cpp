@@ -21,6 +21,7 @@ using namespace glm;
 #include "shader.hpp"
 #include "controls.hpp"
 #include "sprites.hpp"
+#include "overlay.hpp"
 
 struct DIBRContext {
 	double last_mouse_x;
@@ -237,6 +238,9 @@ int main( int argc, char** argv )
 	// set mouse calback
 	glfwSetMouseButtonCallback(window, mouse_button_callback);
 
+	// Initialize overlay 
+	initOverlay2D();
+
 	do
 	{
 		// Clear the screen
@@ -321,6 +325,26 @@ int main( int argc, char** argv )
 		glDisableVertexAttribArray(0);
 		glDisableVertexAttribArray(1);
 		glDisableVertexAttribArray(2);
+		glDisable(GL_BLEND);
+
+		if (context.is_lmb_pressed) {
+			printf("Drawing rectangles");
+			double mouse_x, mouse_y;
+			glfwGetCursorPos(window, &mouse_x, &mouse_y);
+			int width, height;
+			if (mouse_x > context.last_mouse_x) {
+				width = mouse_x - context.last_mouse_x + 1;
+			} else {
+				width = context.last_mouse_x - mouse_x + 1;
+			}
+			if (mouse_y > context.last_mouse_y) {
+				height = mouse_y - context.last_mouse_y + 1;
+			} else {
+				height = context.last_mouse_y - mouse_y + 1;
+			}
+			drawRectangle2D((int)context.last_mouse_x, (int)context.last_mouse_y,
+							width, height);
+		}
 
 		// Swap buffers
 		glfwSwapBuffers(window);
@@ -339,6 +363,8 @@ int main( int argc, char** argv )
 	glDeleteBuffers(1, &billboard_vertex_buffer);
 	glDeleteProgram(programID);
 	glDeleteVertexArrays(1, &VertexArrayID);
+	// Overlay cleanup
+	cleanupOverlay2D();
 
 	// Close OpenGL window and terminate GLFW
 	glfwTerminate();
