@@ -38,7 +38,9 @@ SpriteGenerator :: SpriteGenerator( unsigned char* image_buffer,
                     depth_map[i*x+j] * depth_scale,
                     1
                 );
-                new_sprite.initial_pos = new_pos;
+                new_sprite.initial_pos = glm::vec3(
+                    new_pos.x, new_pos.y, new_pos.z
+                );
                 new_pos = glm::inverse(
                     glm::lookAt(
                         glm::vec3(0,0,60),
