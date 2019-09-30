@@ -7,7 +7,6 @@
 #include <GL/glew.h>
 
 #include <GLFW/glfw3.h>
-GLFWwindow* window;
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/glm.hpp>
@@ -170,7 +169,7 @@ int main( int argc, char** argv )
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 	// Open a window and create its OpenGL context
-	window = glfwCreateWindow( 1024, 768, "DIBR", NULL, NULL);
+	GLFWwindow* window = glfwCreateWindow( 1024, 768, "DIBR", NULL, NULL);
 	if( window == NULL ){
 		fprintf( stderr, "Failed to open GLFW window. If you have an Intel GPU, they are not 3.3 compatible. Try the 2.1 version of the tutorials.\n" );
 		getchar();
@@ -304,7 +303,6 @@ int main( int argc, char** argv )
 			(void*)0            // array buffer offset
 		);
 
-		// 2nd attribute buffer : positions of sprites' centers
 		glEnableVertexAttribArray(1);
 		glBindBuffer(GL_ARRAY_BUFFER, sprites_position_buffer);
 		glVertexAttribPointer(
@@ -316,7 +314,6 @@ int main( int argc, char** argv )
 			(void*)0 
 		);
 		
-		// 3rd attribute buffer : sprites' colors
 		glEnableVertexAttribArray(2);
 		glBindBuffer(GL_ARRAY_BUFFER, sprites_color_buffer);
 		glVertexAttribPointer(
