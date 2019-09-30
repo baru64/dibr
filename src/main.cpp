@@ -78,7 +78,6 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 				  	context->depth_store[i*width + j]
 				);
 
-			
   				glm::vec3 obj_pos = glm::unProject(
 					win_pos,
 					view_matrix,
@@ -195,7 +194,7 @@ int main( int argc, char** argv )
     glfwSetCursorPos(window, 1024/2, 768/2);
 
 	// Dark magenta background
-	glClearColor(0.4f, 0.0f, 0.4f, 0.0f);
+	glClearColor(0.0f, 0.0f, 0.4f, 0.0f);
 
 	// Enable depth test
 	glEnable(GL_DEPTH_TEST);
