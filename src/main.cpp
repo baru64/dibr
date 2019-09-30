@@ -50,16 +50,16 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 		GLfloat depth;
 		unsigned width, height;
 		if (mouse_x > context->last_mouse_x) {
-			width = mouse_x - context->last_mouse_x + 1;
+			width = mouse_x - context->last_mouse_x + 2;
 			mouse_x = context->last_mouse_x; // to make correct selection area
 		} else {
-			width = context->last_mouse_x - mouse_x + 1;
+			width = context->last_mouse_x - mouse_x + 2;
 		}
 		if (mouse_y > context->last_mouse_y) {
-			height = mouse_y - context->last_mouse_y + 1;
+			height = mouse_y - context->last_mouse_y + 2;
 			mouse_y = context->last_mouse_y; // to make correct selection area
 		} else {
-			height = context->last_mouse_y - mouse_y + 1;
+			height = context->last_mouse_y - mouse_y + 2;
 		}
 
 		glReadnPixels(context->last_mouse_x, 768 - context->last_mouse_y - 1,
@@ -194,8 +194,8 @@ int main( int argc, char** argv )
     glfwPollEvents();
     glfwSetCursorPos(window, 1024/2, 768/2);
 
-	// Dark blue background
-	glClearColor(0.0f, 0.0f, 0.4f, 0.0f);
+	// Dark magenta background
+	glClearColor(0.4f, 0.0f, 0.4f, 0.0f);
 
 	// Enable depth test
 	glEnable(GL_DEPTH_TEST);

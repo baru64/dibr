@@ -145,8 +145,11 @@ void SpriteGenerator :: sortSprites() {
 }
 
 void SpriteGenerator :: select(glm::vec3 obj_position) {
-    std::vector<Sprite>::reverse_iterator it_sprite = sprites_container.rbegin();
-    for (int i = 0; i < sprite_count; ++i) {
+    for (
+        std::vector<Sprite>::reverse_iterator it_sprite = sprites_container.rbegin();
+        it_sprite != sprites_container.rend();
+        ++it_sprite
+    ) {
         if (
             (   obj_position.x - 0.1f < it_sprite->pos.x
             && obj_position.x + 0.1f > it_sprite->pos.x )
@@ -158,8 +161,8 @@ void SpriteGenerator :: select(glm::vec3 obj_position) {
             && obj_position.z + 0.1f > it_sprite->pos.z )
         ) {
             it_sprite->selected = true;
+            return;
         }
-        ++it_sprite;
     }
 }
 
@@ -171,6 +174,7 @@ void SpriteGenerator :: removeSelected() {
     ) {
         if (i->selected) sprites_container.erase(i);
     }
+    sprite_count = sprites_container.size();
 }
 
 void SpriteGenerator :: cancelSelection() {
