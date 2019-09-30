@@ -25,7 +25,8 @@ class SpriteGenerator {
             unsigned char* depth_map,
             int x, int y,
             float depth_scale,
-            float background_filter
+            float background_filter,
+            bool unproject
         );
         void fillPositionSizeBuffer(GLfloat* position_size_buffer);
         void fillColorBuffer(GLubyte* color_buffer);

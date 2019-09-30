@@ -14,7 +14,8 @@ SpriteGenerator :: SpriteGenerator( unsigned char* image_buffer,
                                     unsigned char* depth_map,
                                     int x, int y,
                                     float depth_scale,
-                                    float background_filter ) {
+                                    float background_filter,
+                                    bool unproject ) {
     //generate sprites
     for (int i=0; i < y; ++i) {
         for (int j=0; j < x; ++j) {
@@ -29,11 +30,27 @@ SpriteGenerator :: SpriteGenerator( unsigned char* image_buffer,
             new_sprite.b = image_buffer[3*x*i + 3*j + 2];
             new_sprite.a = 255;
             // new_sprite.pos = glm::vec3(j+(x/2), i+(y/2), depth_map[i*x+j]);
-            new_sprite.pos = glm::vec3(
-                j*0.1f-(x/2)*0.1f,
-                (y*0.1f - (i*0.1f) + 0.1f) - (y/2)*0.1f,
-                depth_map[i*x+j] * depth_scale
-            );
+            if (unproject) {
+                new_sprite.size = 0.2f;
+                glm::vec4 new_pos = glm::vec4(
+                    j*0.1f-(x/2)*0.1f,
+                    (y*0.1f - (i*0.1f) + 0.1f) - (y/2)*0.1f,
+                    depth_map[i*x+j] * depth_scale,
+                    1
+                );
+                new_pos = glm::perspective(glm::radians(45.0f),
+                                4.0f / 3.0f, 0.1f, 100.f) * new_pos;
+                new_sprite.pos = glm::vec3(
+                    new_pos.x, new_pos.y, new_pos.z
+                );
+
+            } else {
+                new_sprite.pos = glm::vec3(
+                    j*0.1f-(x/2)*0.1f,
+                    (y*0.1f - (i*0.1f) + 0.1f) - (y/2)*0.1f,
+                    depth_map[i*x+j] * depth_scale
+                );
+            }
 
             new_sprite.selected = false;
             sprites_container.push_back(new_sprite);

@@ -87,9 +87,6 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 					viewport
 				);
 
- 				// printf("Coordinates in object space: %f, %f, %f\n",
-  		       	// 	obj_pos.x, obj_pos.y, obj_pos.z);
-
 				context->sprites->select(obj_pos);
 			}
 		}
@@ -101,6 +98,62 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 
 int main( int argc, char** argv )
 {
+	// Parse arguments
+	float depth_scale = 0.1f;
+	float background_filter = 0.0f;
+	char src_image[128] = "sample_img.jpg";
+	char src_depth[128] = "sample_depth.jpg";
+	bool unproject = false;
+	if (argc >= 2) {
+		if (strncmp(argv[1],"u",1) == 0) unproject = true;
+		if (strncmp(argv[1],"n",1) == 0) unproject = false;
+		if (strncmp(argv[1],"h",1) == 0) {
+			printf(
+				"usage: %s [u|n] [DEPTH_SCALE] [BG_FILTER] [IMAGE] [DEPTH_MAP]\n",
+				argv[0]
+			);
+			return 0;
+		}
+	}
+	if (argc >= 3) depth_scale = atof(argv[2]);
+	if (argc >= 4) background_filter = atof(argv[3]);
+	if (argc == 6) {
+		strcpy(src_image, argv[4]);
+		strcpy(src_depth, argv[5]);
+	}
+
+	// Print controls
+	printf(	"<> CONTROLS:\n\t" \
+			"WASD\t - camera movement\n\t" \
+			"QE\t - zoom\n\t" \
+			"X/C\t - delete selected / cancel selection \n\n");
+
+	// Load images and create sprite generator
+	int rgb_width, rgb_height, d_width, d_height, bpp;
+	unsigned char* rgb_image = stbi_load(src_image, &rgb_width, &rgb_height, &bpp, 3);
+	unsigned char* depth_image = stbi_load(src_depth, &d_width, &d_height, &bpp, 1);
+
+	if (rgb_width != d_width || rgb_height != d_height) {
+		printf("ERROR: Image and depth map have different size!\n");
+		return 1;
+	}
+
+	// create SpriteGenerator
+	SpriteGenerator sprites(rgb_image, depth_image,
+							rgb_width, rgb_height,
+							depth_scale, background_filter,
+							unproject);
+	printf("Number of sprites: %d\n", sprites.sprite_count);
+
+	// Set DIBR context
+	DIBRContext context;
+	context.last_mouse_x = 0.0f;
+	context.last_mouse_y = 0.0f;
+	context.is_lmb_pressed = false;
+	context.sprites = &sprites;
+	context.depth_store = new GLfloat[rgb_width*rgb_height];
+	context.depth_store_size = rgb_width*rgb_height;
+
 	// Initialise GLFW
 	if( !glfwInit() )
 	{
@@ -164,43 +217,6 @@ int main( int argc, char** argv )
 	GLuint CameraRight_worldspace_ID  = glGetUniformLocation(programID, "CameraRight_worldspace");
 	GLuint CameraUp_worldspace_ID  = glGetUniformLocation(programID, "CameraUp_worldspace");
 	GLuint ViewProjMatrixID = glGetUniformLocation(programID, "VP");
-	
-	// Parse arguments
-	float depth_scale = 0.1f;
-	float background_filter = 0.0f;
-	char src_image[128] = "sample_img.jpg";
-	char src_depth[128] = "sample_depth.jpg";
-	if (argc >= 2) depth_scale = atof(argv[1]);
-	if (argc >= 3) background_filter = atof(argv[2]);
-	if (argc == 5) {
-		strcpy(src_image, argv[3]);
-		strcpy(src_depth, argv[4]);
-	}
-
-	// Load images and create sprite generator
-	int rgb_width, rgb_height, d_width, d_height, bpp;
-	unsigned char* rgb_image = stbi_load(src_image, &rgb_width, &rgb_height, &bpp, 3);
-	unsigned char* depth_image = stbi_load(src_depth, &d_width, &d_height, &bpp, 1);
-
-	if (rgb_width != d_width || rgb_height != d_height) {
-		printf("ERROR: Image and depth map have different size!\n");
-		return 1;
-	}
-
-	// create SpriteGenerator
-	SpriteGenerator sprites(rgb_image, depth_image,
-							rgb_width, rgb_height,
-							depth_scale, background_filter);
-	printf("Number of sprites: %d\n", sprites.sprite_count);
-
-	// Set DIBR context
-	DIBRContext context;
-	context.last_mouse_x = 0.0f;
-	context.last_mouse_y = 0.0f;
-	context.is_lmb_pressed = false;
-	context.sprites = &sprites;
-	context.depth_store = new GLfloat[rgb_width*rgb_height];
-	context.depth_store_size = rgb_width*rgb_height;
 
 	// Set window pointer to sprites
 	glfwSetWindowUserPointer(window, reinterpret_cast<void *>(&context));
@@ -328,12 +344,11 @@ int main( int argc, char** argv )
 		glDisable(GL_BLEND);
 
 		if (context.is_lmb_pressed) {
-			printf("Drawing rectangles");
 			double mouse_x, mouse_y;
 			glfwGetCursorPos(window, &mouse_x, &mouse_y);
 			int width, height;
-			width = mouse_x - context.last_mouse_x + 1;
-			height = mouse_y - context.last_mouse_y + 1;
+				width = mouse_x - context.last_mouse_x + 1;
+				height = mouse_y - context.last_mouse_y + 1;
 			drawRectangle2D((int)context.last_mouse_x, (int)context.last_mouse_y,
 							width, height);
 		}
