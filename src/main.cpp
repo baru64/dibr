@@ -166,7 +166,7 @@ int main( int argc, char** argv )
 	glfwWindowHint(GLFW_RESIZABLE,GL_FALSE);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // To make MacOS happy; should not be needed
+	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 	// Open a window and create its OpenGL context
@@ -190,8 +190,6 @@ int main( int argc, char** argv )
 
 	// Ensure we can capture the escape key being pressed below
 	glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
-    // Hide the mouse and enable unlimited mouvement
-    // glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     
     // Set the mouse at the center of the screen
     glfwPollEvents();
@@ -248,7 +246,6 @@ int main( int argc, char** argv )
 	GLuint sprites_color_buffer;
 	glGenBuffers(1, &sprites_color_buffer);
 	glBindBuffer(GL_ARRAY_BUFFER, sprites_color_buffer);
-	// Initialize with empty (NULL) buffer : it will be updated later, each frame.
 	glBufferData(GL_ARRAY_BUFFER, sprites.sprite_count * 4 * sizeof(GLubyte), NULL, GL_STREAM_DRAW);
 
 	// set mouse calback
@@ -262,7 +259,6 @@ int main( int argc, char** argv )
 		// Clear the screen
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		// computeMatricesFromInputs();
 		computeMatrices();
 		glm::mat4 ProjectionMatrix = getProjectionMatrix();
 		glm::mat4 ViewMatrix = getViewMatrix();
@@ -297,14 +293,13 @@ int main( int argc, char** argv )
 
 		glUniformMatrix4fv(ViewProjMatrixID, 1, GL_FALSE, &ViewProjectionMatrix[0][0]);
 
-		// 1rst attribute buffer : vertices
 		glEnableVertexAttribArray(0);
 		glBindBuffer(GL_ARRAY_BUFFER, billboard_vertex_buffer);
 		glVertexAttribPointer(
-			0,                  // attribute. No particular reason for 0, but must match the layout in the shader.
+			0,                  // attribute location
 			3,                  // size
 			GL_FLOAT,           // type
-			GL_FALSE,           // normalized?
+			GL_FALSE,           // normalized
 			0,                  // stride
 			(void*)0            // array buffer offset
 		);
@@ -313,28 +308,28 @@ int main( int argc, char** argv )
 		glEnableVertexAttribArray(1);
 		glBindBuffer(GL_ARRAY_BUFFER, sprites_position_buffer);
 		glVertexAttribPointer(
-			1,                                // attribute. No particular reason for 1, but must match the layout in the shader.
-			4,                                // size : x + y + z + size => 4
-			GL_FLOAT,                         // type
-			GL_FALSE,                         // normalized?
-			0,                                // stride
-			(void*)0                          // array buffer offset
+			1,
+			4,
+			GL_FLOAT,
+			GL_FALSE,
+			0,
+			(void*)0 
 		);
 		
 		// 3rd attribute buffer : sprites' colors
 		glEnableVertexAttribArray(2);
 		glBindBuffer(GL_ARRAY_BUFFER, sprites_color_buffer);
 		glVertexAttribPointer(
-			2,                                // attribute. No particular reason for 1, but must match the layout in the shader.
-			4,                                // size : r + g + b + a => 4
-			GL_UNSIGNED_BYTE,                 // type
-			GL_TRUE,                          // normalized?    *** YES, this means that the unsigned char[4] will be accessible with a vec4 (floats) in the shader ***
-			0,                                // stride
-			(void*)0                          // array buffer offset
+			2,
+			4,
+			GL_UNSIGNED_BYTE,
+			GL_TRUE, 
+			0, 
+			(void*)0 
 		);
 
-		glVertexAttribDivisor(0, 0); // sprites vertices : always reuse the same 4 vertices -> 0
-		glVertexAttribDivisor(1, 1); // positions : one per quad (its center)                 -> 1
+		glVertexAttribDivisor(0, 0); // sprites vertices
+		glVertexAttribDivisor(1, 1); // positions : one per quad
 		glVertexAttribDivisor(2, 1); // color : one per quad
 
 		glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, sprites.sprite_count);
