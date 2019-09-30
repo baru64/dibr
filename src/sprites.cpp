@@ -7,7 +7,7 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/glm.hpp>
 #include <glm/gtx/norm.hpp>
-using namespace glm;
+#include <glm/gtc/matrix_transform.hpp>
 
 #include "sprites.hpp"
 

@@ -101,7 +101,7 @@ int main( int argc, char** argv )
 	float background_filter = 0.0f;
 	char src_image[128] = "sample_img.jpg";
 	char src_depth[128] = "sample_depth.jpg";
-	bool unproject = false;
+	bool unproject = true;
 	if (argc >= 2) {
 		if (strncmp(argv[1],"u",1) == 0) unproject = true;
 		if (strncmp(argv[1],"n",1) == 0) unproject = false;
