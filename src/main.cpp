@@ -102,12 +102,14 @@ int main( int argc, char** argv )
 	char src_image[128] = "sample_img.jpg";
 	char src_depth[128] = "sample_depth.jpg";
 	bool unproject = true;
+	int colorkey[3];
+	bool use_colorkey = false;
 	if (argc >= 2) {
 		if (strncmp(argv[1],"u",1) == 0) unproject = true;
 		if (strncmp(argv[1],"n",1) == 0) unproject = false;
 		if (strncmp(argv[1],"h",1) == 0) {
 			printf(
-				"usage: %s [u|n] [DEPTH_SCALE] [BG_FILTER] [IMAGE] [DEPTH_MAP]\n",
+				"usage: %s [u|n] [DEPTH_SCALE] [BG_FILTER] [IMAGE] [DEPTH_MAP] [KEY_COLOR_RGB]\n",
 				argv[0]
 			);
 			return 0;
@@ -115,9 +117,15 @@ int main( int argc, char** argv )
 	}
 	if (argc >= 3) depth_scale = atof(argv[2]);
 	if (argc >= 4) background_filter = atof(argv[3]);
-	if (argc == 6) {
+	if (argc >= 6) {
 		strcpy(src_image, argv[4]);
 		strcpy(src_depth, argv[5]);
+	}
+	if (argc == 9) {
+		colorkey[0] = atoi(argv[6]);
+		colorkey[1] = atoi(argv[7]);
+		colorkey[2] = atoi(argv[8]);
+		use_colorkey = true;
 	}
 
 	// Print controls
@@ -140,7 +148,7 @@ int main( int argc, char** argv )
 	SpriteGenerator sprites(rgb_image, depth_image,
 							rgb_width, rgb_height,
 							depth_scale, background_filter,
-							unproject);
+							unproject, colorkey, use_colorkey);
 	printf("Number of sprites: %d\n", sprites.sprite_count);
 
 	// Set DIBR context

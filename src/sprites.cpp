@@ -16,7 +16,8 @@ SpriteGenerator :: SpriteGenerator( unsigned char* image_buffer,
                                     int x, int y,
                                     float depth_scale,
                                     float background_filter,
-                                    bool unproject ) {
+                                    bool unproject,
+                                    int* colorkey, bool use_colorkey ) {
     //generate sprites
     for (int i=0; i < y; ++i) {
         for (int j=0; j < x; ++j) {
@@ -24,6 +25,11 @@ SpriteGenerator :: SpriteGenerator( unsigned char* image_buffer,
                 // skip background
                 continue;
             }
+            if (
+                image_buffer[3*x*i + 3*j + 0] == colorkey[0] &&
+                image_buffer[3*x*i + 3*j + 1] == colorkey[1] &&
+                image_buffer[3*x*i + 3*j + 2] == colorkey[2]
+            ) continue; // skip color
             Sprite new_sprite;
             new_sprite.size = 0.1f;
             new_sprite.r = image_buffer[3*x*i + 3*j + 0];

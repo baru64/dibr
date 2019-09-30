@@ -29,7 +29,9 @@ class SpriteGenerator {
             int x, int y,
             float depth_scale,
             float background_filter,
-            bool unproject
+            bool unproject,
+            int* colorkey, 
+            bool use_colorkey
         );
         void fillPositionSizeBuffer(GLfloat* position_size_buffer);
         void fillColorBuffer(GLubyte* color_buffer);
