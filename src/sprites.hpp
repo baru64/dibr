@@ -5,6 +5,7 @@
 
 struct Sprite{
 	glm::vec3 pos;
+	glm::vec3 initial_pos;
 	unsigned char r,g,b,a; // Color
 	float size;
 	float camera_distance; 
@@ -19,6 +20,8 @@ struct Sprite{
 class SpriteGenerator {
     public:
         int sprite_count;
+        float viewer_horizontal_pos;  // theta
+        float viewer_vertical_pos;    // fi
 
         SpriteGenerator(
             unsigned char* image_buffer,
@@ -35,6 +38,7 @@ class SpriteGenerator {
         void select(glm::vec3 obj_position);
         void removeSelected();
         void cancelSelection();
+        void recalculatePositions();
     private:
         std::vector<Sprite> sprites_container;
 };

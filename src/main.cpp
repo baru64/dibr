@@ -350,7 +350,7 @@ int main( int argc, char** argv )
 		glfwPollEvents();
 
 	}
-	while( !handleKeyboard(window, &sprites) &&
+	while( !handleKeyboard(window, &sprites, unproject) &&
 		   glfwWindowShouldClose(window) == 0 );
 
 

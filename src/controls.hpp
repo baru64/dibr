@@ -5,7 +5,7 @@
 
 void computeMatrices();
 void computeMatricesFromInputs();
-bool handleKeyboard(GLFWwindow* window, SpriteGenerator* sprites);
+bool handleKeyboard(GLFWwindow* window, SpriteGenerator* sprites, bool u);
 glm::mat4 getViewMatrix();
 glm::mat4 getProjectionMatrix();
 

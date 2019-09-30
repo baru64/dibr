@@ -7,6 +7,7 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/glm.hpp>
 #include <glm/gtx/norm.hpp>
+using namespace glm;
 
 #include "sprites.hpp"
 
@@ -31,16 +32,16 @@ SpriteGenerator :: SpriteGenerator( unsigned char* image_buffer,
             new_sprite.a = 255;
             // new_sprite.pos = glm::vec3(j+(x/2), i+(y/2), depth_map[i*x+j]);
             if (unproject) {
-                new_sprite.size = 0.2f;
                 glm::vec4 new_pos = glm::vec4(
                     j*0.1f-(x/2)*0.1f,
                     (y*0.1f - (i*0.1f) + 0.1f) - (y/2)*0.1f,
                     depth_map[i*x+j] * depth_scale,
                     1
                 );
+                new_sprite.initial_pos = new_pos;
                 new_pos = glm::inverse(
                     glm::lookAt(
-                        glm::vec3(10,0,60),
+                        glm::vec3(0,0,60),
                         glm::vec3(0,0,0),
                         glm::vec3(0,1,0)
                     )
@@ -62,7 +63,43 @@ SpriteGenerator :: SpriteGenerator( unsigned char* image_buffer,
             sprites_container.push_back(new_sprite);
         }
     }
+    viewer_horizontal_pos = 0.0f;
+    viewer_vertical_pos = 0.0f;
     sprite_count = sprites_container.size();
+}
+
+void SpriteGenerator :: recalculatePositions() {
+    for(
+        std::vector<Sprite>::iterator i = sprites_container.begin();
+        i != sprites_container.end();
+        ++i
+    ) {
+        glm::vec4 new_pos = glm::vec4(
+            i->initial_pos.x,
+            i->initial_pos.y,
+            i->initial_pos.z,
+            1
+        );
+
+        glm::vec3 viewer_position = glm::vec3(
+            viewer_horizontal_pos,
+            viewer_vertical_pos,
+            60
+        );
+        
+        new_pos = glm::inverse(
+            glm::lookAt(
+                viewer_position,
+                glm::vec3(0,0,0),
+                glm::vec3(0,1,0)
+            )
+        ) * new_pos;
+        new_pos = glm::inverse(glm::perspective(glm::radians(45.0f),
+                        4.0f / 3.0f, 0.1f, 100.f)) * new_pos;
+        i->pos = glm::vec3(
+            new_pos.x, new_pos.y, new_pos.z
+        );
+    }
 }
 
 void SpriteGenerator :: updateCameraDistance(glm::vec3 camera_position) {

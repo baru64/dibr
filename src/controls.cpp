@@ -27,26 +27,42 @@ float verticalAngle = 0.0f;
 // Initial Field of View
 float initialFoV = 45.0f;
 
-float alpha = 0; // theta
+float alpha = 3.14f * 0.5f; // theta
 float beta = 0; // fi
 float r = 60;
 
-bool handleKeyboard(GLFWwindow* window, SpriteGenerator* sprites) {
+bool handleKeyboard(GLFWwindow* window, SpriteGenerator* sprites, bool u) {
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE ) == GLFW_PRESS) return true;
 	if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-		beta += 3.14f * 0.05f;
+		if (u) {
+			sprites->viewer_vertical_pos += 1;
+			sprites->recalculatePositions();
+		}
+		else alpha += 3.14f * 0.05f;
 		return false;
 	}
 	if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-		alpha -= 3.14f * 0.05f;
+		if (u) {
+			sprites->viewer_horizontal_pos -= 1;
+			sprites->recalculatePositions();
+		}
+		else beta -= 3.14f * 0.05f;
 		return false;
 	}
 	if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-		beta -= 3.14f * 0.05f;
+		if (u) {
+			sprites->viewer_vertical_pos -= 1;
+			sprites->recalculatePositions();
+		}
+		else alpha -= 3.14f * 0.05f;
 		return false;
 	}
 	if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-		alpha += 3.14f * 0.05f;
+		if (u) {
+			sprites->viewer_horizontal_pos += 1;
+			sprites->recalculatePositions();
+		}
+		else beta += 3.14f * 0.05f;
 		return false;
 	}
 	if(glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
@@ -70,23 +86,12 @@ bool handleKeyboard(GLFWwindow* window, SpriteGenerator* sprites) {
 
 void computeMatrices() {
 	position = glm::vec3(
-		r * sin(alpha) * cos(beta),
 		r * sin(alpha) * sin(beta),
-		r * cos(alpha)
+		r * cos(alpha),
+		r * sin(alpha) * cos(beta)
 	);
 
-	glm::vec3 direction(
-		cos(verticalAngle) * sin(horizontalAngle), 
-		sin(verticalAngle),
-		cos(verticalAngle) * cos(horizontalAngle)
-	);
-	glm::vec3 right = glm::vec3(
-		sin(horizontalAngle - 3.14f/2.0f), 
-		0,
-		cos(horizontalAngle - 3.14f/2.0f)
-	);
-	glm::vec3 up = glm::cross( right, direction );
-	float FoV = initialFoV;// - 5 * glfwGetMouseWheel(); // Now GLFW 3 requires setting up a callback for this. It's a bit too complicated for this beginner's tutorial, so it's disabled instead.
+	float FoV = initialFoV;
 
 	ProjectionMatrix = glm::perspective(glm::radians(FoV), 4.0f / 3.0f, 0.1f, 100.0f);
 	ViewMatrix       = glm::lookAt(
